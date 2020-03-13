@@ -1,5 +1,8 @@
+import { environment } from './../../../environments/environment';
 import { Task } from './task';
 import { Injectable } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Observable } from 'rxjs';
 
 @Injectable({
   providedIn: 'root'
@@ -8,43 +11,26 @@ export class TaskService {
 
   tasks: Task[] = [];
 
-  constructor() { }
+  constructor(private http: HttpClient) { }
 
-  getAll(): Task[] {
-    const list = window.localStorage.getItem('lista_tarefas');
-    if (list) {
-      this.tasks = JSON.parse(list);
-    }
-    return this.tasks;
+  getAll(): Observable<Task[]> {
+    return this.http.get<Task[]>(`${environment.api}/tasks`);
   }
 
-  getById(id: number): Task {
-    const taskFound = this.tasks.find((task) => task.id === id);
-    return taskFound;
+  getById(id: string): Observable<Task> {
+    return this.http.get<Task>(`${environment.api}/tasks/${id}`);
   }
 
-  save(task: Task): Task {
-    if (task.id) {
-      const taskArr = this.getById(task.id);
-      taskArr.description = task.description;
-      taskArr.completed = task.completed;
+  save(task: Task): Observable<Task> {
+    if (task._id) {
+      return this.http.put<Task>(`${environment.api}/tasks/${task._id}`, task);
     } else {
-      let lastId = 0;
-      if (this.tasks.length > 0) {
-        lastId = this.tasks[this.tasks.length].id + 1;
-      }
-      task.id = lastId + 1;
-      task.completed = false;
-      this.tasks.push(task);
+      return this.http.post<Task>(`${environment.api}/tasks`, task);
     }
-    window.localStorage.setItem('lista_tarefas', JSON.stringify(this.tasks));
-    return task;
   }
 
-  delete(id: number) {
-    const taskIndex = this.tasks.findIndex((task) => task.id === id);
-    this.tasks.splice(taskIndex, 1);
-    window.localStorage.setItem('lista_tarefas', JSON.stringify(this.tasks));
+  delete(id: string): Observable<any> {
+    return this.http.delete<any>(`${environment.api}/tasks/${id}`);
   }
 
 }
